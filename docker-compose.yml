@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  gatewayd:
+    build:
+      context: .
+      dockerfile: Dockerfile.gatewayd
+    container_name: ai-gate-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - LOG_LEVEL=INFO
+      - GATEWAY_CONFIG_PATH=/config/gateway.yaml
+      - CREDENTIALS_FILE=/config/credentials.json
+      - ENROLLMENT_SECRETS_FILE=/config/enrollments.json
+      - POLICY_CONFIG_FILE=/config/policies.json
+    volumes:
+      - ./config:/config
+      - ./gatewayd:/app/gatewayd
+    networks:
+      - ai-gate
+    command: python -m gatewayd.app
+
+  ssh-gw:
+    build:
+      context: .
+      dockerfile: Dockerfile.ssh-gw
+    container_name: ai-gate-ssh
+    ports:
+      - "2222:22"
+    environment:
+      - LOG_LEVEL=INFO
+      - GATEWAY_URL=http://gatewayd:5000
+    volumes:
+      - ./ssh-gw:/app/ssh-gw
+      - ./config:/config
+    networks:
+      - ai-gate
+    depends_on:
+      - gatewayd
+
+  # Test agent container
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent
+    container_name: ai-gate-agent
+    environment:
+      - GATEWAY_URL=http://gatewayd:5000
+      - GATEWAY_SESSION_TOKEN=${GATEWAY_SESSION_TOKEN}
+      - GATEWAY_TENANT_ID=default
+    volumes:
+      - ./examples:/app/examples
+    networks:
+      - ai-gate
+    depends_on:
+      - gatewayd
+      - ssh-gw
+    command: tail -f /dev/null  # Keep running for manual testing
+
+networks:
+  ai-gate:
+    driver: bridge

@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install CLI tools and dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    aws-cli \
+    google-cloud-sdk \
+    terraform \
+    kubectl \
+    jq \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy examples
+COPY examples /app/examples
+
+# Default command
+CMD ["bash"]

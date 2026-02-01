@@ -1,0 +1,16 @@
+{
+  "default": {
+    "mode": "strict",
+    "exceptions": []
+  },
+  "cautious": {
+    "mode": "cautious",
+    "exceptions": [
+      {
+        "provider": "github",
+        "methods": ["POST", "PUT", "PATCH"],
+        "paths": ["/repos/*/contents/*", "/repos/*/pulls", "/repos/*/issues"]
+      }
+    ]
+  }
+}
