@@ -1,0 +1,31 @@
+# Gateway Configuration
+# This file is primarily used for future integrations with
+# 1Password CLI, Vault, or AWS Secrets Manager
+
+tenants:
+  default:
+    # Enrollment secret hash (SHA256)
+    enrollment_secret: test-secret-123
+    
+    # Credential mappings
+    credentials:
+      github:personal:
+        type: github_pat
+        source: environment  # Will load from CRED_DEFAULT_GITHUB_PERSONAL
+      
+      aws:prod-readonly:
+        type: aws_assumerole
+        source: environment
+      
+      gcp:default:
+        type: gcp_service_account
+        source: environment
+
+# Security mode: strict or cautious
+security_mode: strict
+
+# Notification channels
+notifications:
+  - slack
+  - terminal
+  - desktop

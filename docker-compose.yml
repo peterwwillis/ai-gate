@@ -20,7 +20,7 @@ services:
       - ./gatewayd:/app/gatewayd
     networks:
       - ai-gate
-    command: python -m gatewayd.app
+    command: python gatewayd/app.py
 
   ssh-gw:
     build:

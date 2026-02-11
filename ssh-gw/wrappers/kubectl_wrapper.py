@@ -3,7 +3,7 @@
 import os
 import sys
 from typing import List, Dict, Any
-from base import CLIWrapper, ActionType
+from .base import CLIWrapper, ActionType
 
 
 class KubectlWrapper(CLIWrapper):
