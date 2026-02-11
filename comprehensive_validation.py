@@ -235,8 +235,6 @@ def main():
         "ARCHITECTURE.md",
         "DEVELOPMENT.md",
         "TROUBLESHOOTING.md",
-        "IMPLEMENTATION.md",
-        "COMPLETION.md",
         ".github/copilot-instructions.md",
     ]
     for doc in docs:
