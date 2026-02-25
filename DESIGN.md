@@ -313,3 +313,77 @@ This design provides:
 
 The remaining work is mechanical implementation.
 
+---
+
+## 16. Composable Architecture Plan (Simple + Extensible)
+
+To keep AI-GATE simple, highly cohesive, and loosely coupled while making it easy to extend for new tools/sites/APIs, implement a small plugin kernel around the existing components.
+
+### 16.1 Core Rule
+
+- Keep `gatewayd` as a thin orchestration core.
+- Move provider/tool specifics into plugins.
+- Core owns only:
+  - session/auth context
+  - request normalization
+  - approval gating lifecycle
+  - plugin loading and dispatch
+  - audit/logging
+
+### 16.2 Plugin Types
+
+Define narrow interfaces so each concern is independently replaceable:
+
+1. **AuthN/AuthZ Plugin**
+   - Validates agent/session identity
+   - Resolves tenant and allowed credential selectors
+2. **Classification/Policy Plugin**
+   - Classifies read/write and computes approval requirement
+3. **Credential Provider Plugin**
+   - Fetches and returns scoped credentials (never exposed to agent)
+4. **Execution Plugin**
+   - Executes proxied HTTP/CLI action with injected credentials
+5. **Notifier Plugin**
+   - Sends approval prompts and receives decisions
+
+Default plugins can preserve current behavior (JSON config, in-memory approvals, conservative method/CLI heuristics).
+
+### 16.3 Composition Model
+
+- Add a plugin registry loaded from config (YAML/JSON):
+  - `authn`, `policy`, `creds`, `executor`, `notifier`
+- Plugins are selected by tenant and provider/tool where needed.
+- Keep plugin contracts data-oriented (simple dict I/O) to minimize coupling and simplify testing.
+
+### 16.4 Implementation Sketch (Phased)
+
+1. **Phase 1: Kernel + Contracts**
+   - Extract current logic behind interfaces without behavior changes.
+   - Add built-in plugins that wrap existing code paths.
+2. **Phase 2: Provider Adapters**
+   - Split provider-specific classification/injection into provider plugins (`github`, `aws`, `gcp`, `slack`, etc.).
+3. **Phase 3: Execution Backends**
+   - Add interchangeable executors (HTTP proxy executor, SSH wrapper executor, future RPC executor).
+4. **Phase 4: Config-Driven Extension**
+   - Load external plugins by entrypoint/module path with allowlist.
+   - Keep secure defaults: unknown plugins disabled unless explicitly configured.
+5. **Phase 5: Operational Hardening**
+   - Add plugin-level metrics, failure isolation, timeout/circuit controls, and structured audit events.
+
+### 16.5 Minimal Initial File Layout
+
+```
+gatewayd/
+  core/
+    engine.py          # orchestration
+    plugin_registry.py
+    contracts.py       # plugin Protocols/ABCs + request/decision models
+  plugins/
+    authn/default.py
+    policy/default.py
+    creds/default.py
+    executor/http.py
+    notifier/terminal.py
+```
+
+This keeps the architecture dead simple to run (usable defaults) while making authn/authz/remote-execution extension a plugin drop-in rather than a core rewrite.
